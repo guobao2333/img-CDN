@@ -21,14 +21,14 @@ jobs:
           # - os: ubuntu-22.04
           #   libvips-version: master
           - os: ubuntu-22.04
-            libvips-version: 8.15.1
+            libvips-version: 8.15.2
             coverage: true
     steps:
       - uses: actions/checkout@v4
       - name: Cache libvips
         if: matrix.libvips-version != 'master'
         id: cache-libvips
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/vips
           key: ${{ matrix.libvips-version }}
@@ -42,12 +42,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
             meson \
+            libtest-nginx-perl \
             libcgif-dev libexif-dev libexpat1-dev \
-            libheif-dev libimagequant-dev liblcms2-dev \
-            libmagickcore-dev libhwy-dev libpango1.0-dev \
+            libheif-dev libhwy-dev libimagequant-dev \
+            liblcms2-dev libmagickcore-dev libpango1.0-dev \
             libpng-dev libpoppler-glib-dev librsvg2-dev \
             libtiff5-dev libwebp-dev \
-            libtest-nginx-perl \
             liborc-0.4-dev # FIXME: Remove once libhwy 1.0.5 is available.
       - name: Install libvips
         if: steps.cache-libvips.outputs.cache-hit != 'true'
@@ -82,10 +82,9 @@ jobs:
         run: prove -r test/nginx
       - name: Upload coverage to Codecov
         if: matrix.coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
-          gcov: true
-          gcov_ignore: test/api
+          token: ${{ secrets.CODECOV_TOKEN }}
   docker-publish:
     needs: CI
     runs-on: ubuntu-22.04
