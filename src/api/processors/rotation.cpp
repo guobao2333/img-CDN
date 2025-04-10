@@ -10,8 +10,8 @@ using parsers::Color;
 
 VImage Rotation::process(const VImage &image) const {
     // Only arbitrary angles are valid
-    auto rotation = query_->get_if<int>(
-        "ro", [](int r) { return r % 90 != 0; }, 0);
+    auto rotation =
+        query_->get_if<int>("ro", [](int r) { return r % 90 != 0; }, 0);
 
     // Should we process the image?
     // Skip for multi-page images
@@ -39,8 +39,7 @@ VImage Rotation::process(const VImage &image) const {
             : image.bandjoin_const({255});  // Assumes images are always 8-bit
 
     return utils::stay_sequential(output_image, config_.process_timeout)
-        .rotate(static_cast<double>(rotation),
-                VImage::option()->set("background", background_rgba));
+        .rotate(rotation, VImage::option()->set("background", background_rgba));
 }
 
 }  // namespace weserv::api::processors

@@ -70,9 +70,11 @@ struct ngx_weserv_base_ctx_t {
     virtual ~ngx_weserv_base_ctx_t() = default;
 
     /**
-     * The incoming chain.
+     * The incoming image.
      */
-    ngx_chain_t *in;
+    u_char *image;
+    u_char *last;
+    size_t length;
 };
 
 /**
@@ -100,6 +102,11 @@ struct ngx_weserv_upstream_ctx_t : ngx_weserv_base_ctx_t {
      * redirects).
      */
     std::unique_ptr<HTTPRequest> request;
+
+    /**
+     * The original DNS resolver handler.
+     */
+    ngx_resolver_handler_pt original_resolver;
 
     /**
      * Response information.

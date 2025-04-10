@@ -2,7 +2,6 @@
 
 namespace weserv::api::io {
 
-#ifdef WESERV_ENABLE_TRUE_STREAMING
 /* Class implementation */
 
 // We need C linkage for this.
@@ -12,7 +11,7 @@ G_DEFINE_TYPE(WeservTarget, weserv_target, VIPS_TYPE_TARGET);
 
 static gint64 weserv_target_write_wrapper(VipsTarget *target, const void *data,
                                           size_t length) {
-    auto weserv_target = WESERV_TARGET(target)->target;
+    auto *weserv_target = WESERV_TARGET(target)->target;
 
     return weserv_target->write(data, length);
 }
@@ -20,21 +19,21 @@ static gint64 weserv_target_write_wrapper(VipsTarget *target, const void *data,
 // LCOV_EXCL_START
 static gint64 weserv_target_read_wrapper(VipsTarget *target, void *data,
                                          size_t length) {
-    auto weserv_target = WESERV_TARGET(target)->target;
+    auto *weserv_target = WESERV_TARGET(target)->target;
 
     return weserv_target->read(data, length);
 }
 
 static gint64 weserv_target_seek_wrapper(VipsTarget *target, gint64 offset,
                                          int whence) {
-    auto weserv_target = WESERV_TARGET(target)->target;
+    auto *weserv_target = WESERV_TARGET(target)->target;
 
     return weserv_target->seek(offset, whence);
 }
 // LCOV_EXCL_STOP
 
 static int weserv_target_end_wrapper(VipsTarget *target) {
-    auto weserv_target = WESERV_TARGET(target)->target;
+    auto *weserv_target = WESERV_TARGET(target)->target;
 
     return weserv_target->end();
 }
@@ -64,11 +63,11 @@ static void weserv_target_class_init(WeservTargetClass *klass) {
     // clang-format on
 }
 
-static void weserv_target_init(WeservTarget *output) {}
+static void weserv_target_init(WeservTarget *target) {}
 
 /* private API */
 
-Target Target::new_to_pointer(std::unique_ptr<io::TargetInterface> target) {
+Target Target::new_to_pointer(const std::unique_ptr<TargetInterface> &target) {
     WeservTarget *weserv_target = WESERV_TARGET(
         g_object_new(WESERV_TYPE_TARGET, "target", target.get(), nullptr));
 
@@ -104,7 +103,7 @@ Target Target::new_to_memory() {
 void Target::setup(const std::string &extension) const {
     VipsTarget *output = get_target();
     if (WESERV_IS_TARGET(output)) {
-        io::TargetInterface *target = WESERV_TARGET(output)->target;
+        TargetInterface *target = WESERV_TARGET(output)->target;
         target->setup(extension);
     }
 }
@@ -116,32 +115,5 @@ int64_t Target::write(const void *data, size_t length) const {
 int Target::end() const {
     return vips_target_end(get_target());
 }
-#else
-Target Target::new_to_pointer(std::unique_ptr<io::TargetInterface> target) {
-    return Target(std::move(target));
-}
-
-Target Target::new_to_file(const std::string &filename) {
-    return Target(
-        std::unique_ptr<io::TargetInterface>(new FileTarget(filename)));
-}
-
-Target Target::new_to_memory(std::string *out_memory) {
-    return Target(
-        std::unique_ptr<io::TargetInterface>(new MemoryTarget(out_memory)));
-}
-
-void Target::setup(const std::string &extension) const {
-    target_->setup(extension);
-}
-
-int64_t Target::write(const void *data, size_t length) const {
-    return target_->write(data, length);
-}
-
-int Target::end() const {
-    return target_->end();
-}
-#endif
 
 }  // namespace weserv::api::io

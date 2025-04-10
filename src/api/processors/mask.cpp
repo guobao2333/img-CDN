@@ -124,18 +124,10 @@ std::string Mask::svg_path_by_type(const int width, const int height,
 
         coordinates.push_back({x, y});
 
-        if (x > x_max) {
-            x_max = x;
-        }
-        if (y > y_max) {
-            y_max = y;
-        }
-        if (x < x_min) {
-            x_min = x;
-        }
-        if (y < y_min) {
-            y_min = y;
-        }
+        x_max = std::max(x, x_max);
+        y_max = std::max(y, y_max);
+        x_min = std::min(x, x_min);
+        y_min = std::min(y, y_min);
     }
 
     *out_x_min = static_cast<int>(std::round(x_min));
@@ -197,18 +189,10 @@ Mask::heart_path(const float cx, const float cy, int *out_x_min, int *out_y_min,
 
         coordinates.push_back({x, y});
 
-        if (x > x_max) {
-            x_max = x;
-        }
-        if (y > y_max) {
-            y_max = y;
-        }
-        if (x < x_min) {
-            x_min = x;
-        }
-        if (y < y_min) {
-            y_min = y;
-        }
+        x_max = std::max(x, x_max);
+        y_max = std::max(y, y_max);
+        x_min = std::min(x, x_min);
+        y_min = std::min(y, y_min);
     }
 
     *out_x_min = static_cast<int>(std::round(x_min));
@@ -267,11 +251,10 @@ Mask::transformed_path_string(const std::vector<PathCoordinate> &coordinates,
     ss << std::fixed << std::showpoint << std::setprecision(1);
 
     for (size_t i = 0; i != coordinates.size(); ++i) {
-        PathCoordinate coordinate = coordinates[i];
+        auto [x, y] = coordinates[i];
 
         auto prepend = i == 0 ? "M" : " L";
-        ss << prepend << coordinate.x * scale + transl.x << " "
-           << coordinate.y * scale + transl.y;
+        ss << prepend << x * scale + transl.x << " " << y * scale + transl.y;
     }
 
     ss << " Z";
@@ -329,7 +312,7 @@ VImage Mask::process(const VImage &image) const {
         auto blob =
             Blob(vips_blob_new(nullptr, svg_mask.data(), svg_mask.size()));
         auto mask = VImage::svgload_buffer(
-            blob.get_blob(),
+            blob.get(),
             VImage::option()->set("access", VIPS_ACCESS_SEQUENTIAL));
 
         // Cutout via dest-in
@@ -360,7 +343,7 @@ VImage Mask::process(const VImage &image) const {
         auto blob =
             Blob(vips_blob_new(nullptr, svg_frame.data(), svg_frame.size()));
         auto frame = VImage::svgload_buffer(
-            blob.get_blob(),
+            blob.get(),
             VImage::option()->set("access", VIPS_ACCESS_SEQUENTIAL));
 
         // Ensure image to composite is premultiplied sRGB

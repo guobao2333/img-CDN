@@ -1,11 +1,11 @@
 # Based on:
-# https://hg.nginx.org/pkg-oss/file/tip/alpine/Makefile
+# https://github.com/nginx/pkg-oss/blob/master/alpine/Makefile
 # https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
-FROM alpine:3.20
+FROM alpine:3.21
 
 LABEL maintainer="Kleis Auke Wolthuizen <info@kleisauke.nl>"
 
-ARG NGINX_VERSION=1.27.0
+ARG NGINX_VERSION=1.27.4
 
 # Copy the contents of this repository to the container
 COPY . /var/www/imagesweserv
@@ -45,7 +45,7 @@ RUN addgroup -g 101 -S nginx \
     && cmake --build _build -- -j$(nproc) \
     # Remove build directory and dependencies
     && rm -rf _build \
-    && apk del .build-deps \
+    && apk del --no-network .build-deps \
     # Bring in runtime dependencies
     && apk add --no-cache \
         openssl \

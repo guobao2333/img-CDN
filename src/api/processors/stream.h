@@ -14,8 +14,8 @@ namespace weserv::api::processors {
 
 class Stream {
  public:
-    Stream(std::shared_ptr<parsers::Query> query, const Config &config)
-        : query_(std::move(query)), config_(config) {}
+    Stream(const std::unique_ptr<parsers::Query> &query, const Config &config)
+        : query_(query), config_(config) {}
 
     VImage new_from_source(const io::Source &source) const;
 
@@ -25,7 +25,7 @@ class Stream {
     /**
      * Query holder.
      */
-    const std::shared_ptr<parsers::Query> query_;
+    const std::unique_ptr<parsers::Query> &query_;
 
     /**
      * Global config.
@@ -36,7 +36,7 @@ class Stream {
      * Finds the largest/smallest page in the range [0, n_pages].
      * Pages are compared using the given comparison function.
      * See: https://github.com/weserv/images/issues/170.
-     * @tparam T Comparison type.
+     * @tparam Comparator Comparison type.
      * @param image The source image.
      * @param n_pages Number of pages in the image.
      * @param source Source to read from.

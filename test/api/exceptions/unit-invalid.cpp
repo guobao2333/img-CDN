@@ -29,13 +29,13 @@ TEST_CASE("invalid image", "[invalid]") {
     SECTION("source") {
         class InvalidSource : public SourceInterface {
             int64_t read(void *data, size_t length) override {
-                int64_t available = std::min(length, buffer_.size() - read_pos_);
+                int64_t available =
+                    std::min(length, buffer_.size() - read_pos_);
                 if (available <= 0) {
                     return 0;
                 }
 
-                buffer_.copy(reinterpret_cast<char *>(data), available,
-                             read_pos_);
+                buffer_.copy(static_cast<char *>(data), available, read_pos_);
                 read_pos_ += available;
                 return available;
             }
@@ -49,8 +49,7 @@ TEST_CASE("invalid image", "[invalid]") {
             int64_t read_pos_{0};
         };
 
-        Status status = process(
-            std::unique_ptr<SourceInterface>(new InvalidSource()), nullptr);
+        Status status = process(std::make_unique<InvalidSource>(), nullptr);
 
         CHECK(!status.ok());
         CHECK(status.code() == static_cast<int>(Status::Code::InvalidImage));
@@ -59,12 +58,6 @@ TEST_CASE("invalid image", "[invalid]") {
                    ContainsSubstring("Invalid or unsupported image format"));
     }
     SECTION("empty source") {
-        if (vips_version(0) < 8 ||
-            (vips_version(0) == 8 && vips_version(1) < 13)) {
-            SUCCEED("requires libvips 8.13+, skipping test");
-            return;
-        }
-
         class UnreadableSource : public SourceInterface {
             int64_t read(void * /* unsused */, size_t /* unsused */) override {
                 return -1;
@@ -75,8 +68,7 @@ TEST_CASE("invalid image", "[invalid]") {
             }
         };
 
-        Status status = process(
-            std::unique_ptr<SourceInterface>(new UnreadableSource()), nullptr);
+        Status status = process(std::make_unique<UnreadableSource>(), nullptr);
 
         CHECK(!status.ok());
         CHECK(status.code() == static_cast<int>(Status::Code::InvalidImage));

@@ -1,5 +1,5 @@
 if (NOT NGX_VERSION)
-    set(NGX_VERSION 1.27.0)
+    set(NGX_VERSION 1.27.4)
 endif()
 
 set(NGX_ROOT ${CMAKE_CURRENT_BINARY_DIR})
@@ -22,14 +22,6 @@ set(NGX_CONFIGURE_OPTS
         --with-pcre-jit
         #--with-google_perftools_module
         )
-
-# Install the echo module only in debug builds
-# (needed by the integration tests)
-if (CMAKE_BUILD_TYPE MATCHES "Debug")
-    list(APPEND NGX_CONFIGURE_OPTS
-            "--add$<$<BOOL:${NGX_DYN_MODULE}>:-dynamic>-module=${ECHO_MODULE_SOURCE}"
-            )
-endif()
 
 if (CMAKE_GENERATOR MATCHES "Make")
     # Use special command for Makefiles to support parallelism.

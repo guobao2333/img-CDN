@@ -38,6 +38,19 @@ inline bool is_16_bit(const VipsInterpretation interpretation) {
            interpretation == VIPS_INTERPRETATION_GREY16;
 }
 
+#if VIPS_VERSION_AT_LEAST(8, 16, 0)
+/**
+ * Is this image palette-based?
+ * @param image The source image.
+ * @return A bool indicating whether the image is palette-based.
+ */
+inline bool is_palette(const VImage &image) {
+    return image.get_typeof(VIPS_META_PALETTE) != 0
+               ? static_cast<bool>(image.get_int(VIPS_META_PALETTE))
+               : false;
+}
+#endif
+
 /**
  * Does this image have an embedded profile?
  * @param image The source image.
@@ -220,7 +233,7 @@ inline VImage stay_sequential(const VImage &image,
 
     // Copy to memory evaluates the image, so set up the timeout handler,
     // if necessary.
-    utils::setup_timeout_handler(image, process_timeout);
+    setup_timeout_handler(image, process_timeout);
 
     auto copy = image.copy_memory().copy();
     copy.remove(VIPS_META_SEQUENTIAL);
@@ -251,15 +264,6 @@ inline Output to_output(const ImageType &image_type) {
 }
 
 /**
- * libvips 8.11 swapped giflib with libnsgif for loading GIF images.
- */
-#if VIPS_VERSION_AT_LEAST(8, 11, 0)
-#define VIPS_FOREIGN_LOAD_GIF "VipsForeignLoadNsgif"
-#else
-#define VIPS_FOREIGN_LOAD_GIF "VipsForeignLoadGif"
-#endif
-
-/**
  * Determine image type from the name of the load operation.
  * @param loader The name of the load operation.
  * @return The image type.
@@ -277,7 +281,7 @@ inline ImageType determine_image_type(const std::string &loader) {
     if (loader.rfind("VipsForeignLoadTiff", 0) == 0) {
         return ImageType::Tiff;
     }
-    if (loader.rfind(VIPS_FOREIGN_LOAD_GIF, 0) == 0) {
+    if (loader.rfind("VipsForeignLoadNsgif", 0) == 0) {
         return ImageType::Gif;
     }
     if (loader.rfind("VipsForeignLoadSvg", 0) == 0) {
@@ -487,6 +491,16 @@ inline std::string image_to_json(const VImage &image,
     }
     json << R"("isProgressive":)"
          << (image.get_typeof("interlaced") != 0 ? "true" : "false") << ",";
+#if VIPS_VERSION_AT_LEAST(8, 16, 0)
+    json << R"("isPalette":)" << (is_palette(image) ? "true" : "false") << ",";
+#endif
+#if VIPS_VERSION_AT_LEAST(8, 15, 0)
+    if (image.get_typeof(VIPS_META_BITS_PER_SAMPLE) != 0) {
+        json << R"("bitsPerSample":)"
+             << image.get_int(VIPS_META_BITS_PER_SAMPLE) << ",";
+    }
+#endif
+    // `palette-bit-depth` is deprecated in favor of `bits-per-sample`.
     if (image.get_typeof("palette-bit-depth") != 0) {
         json << R"("paletteBitDepth":)" << image.get_int("palette-bit-depth")
              << ",";

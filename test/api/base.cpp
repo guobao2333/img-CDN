@@ -7,10 +7,6 @@
 std::shared_ptr<Fixtures> fixtures;
 std::shared_ptr<weserv::api::ApiManager> api_manager;
 
-// libvips prior to 8.12 uses *magick for saving to gif
-bool pre_8_12 =
-    vips_version(0) < 8 || (vips_version(0) == 8 && vips_version(1) < 12);
-
 VImage buffer_to_image(const std::string &buf) {
     const char *operation_name =
         vips_foreign_find_load_buffer(buf.data(), buf.size());
@@ -34,11 +30,10 @@ VImage buffer_to_image(const std::string &buf) {
     return out;
 }
 
-Status process(std::unique_ptr<SourceInterface> source,
-               std::unique_ptr<TargetInterface> target,
+Status process(const std::unique_ptr<SourceInterface> &source,
+               const std::unique_ptr<TargetInterface> &target,
                const std::string &query, const Config &config) {
-    return api_manager->process(query, std::move(source), std::move(target),
-                                config);
+    return api_manager->process(query, source, target, config);
 }
 
 template <>
@@ -151,8 +146,8 @@ int main(const int argc, const char *argv[]) {
     fixtures = std::make_shared<Fixtures>(fixtures_dir);
 
     weserv::api::ApiManagerFactory weserv_factory;
-    api_manager = weserv_factory.create_api_manager(
-        std::unique_ptr<weserv::api::ApiEnvInterface>(new TestEnvironment()));
+    api_manager =
+        weserv_factory.create_api_manager(std::make_unique<TestEnvironment>());
 
     return session.run();
 }
